@@ -1,4 +1,4 @@
-# GoldenSAML-PS
+# ADFSDump-PS
 I can't take credit for the hard work done in building [ADFSDump](https://github.com/mandiant/ADFSDump) but this is a PowerShell port of it using native functions. 
 
 ## Pre-Reqs
