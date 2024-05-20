@@ -2,7 +2,7 @@
 I can't take credit for the hard work done in building [ADFSDump](https://github.com/mandiant/ADFSDump) but this is a PowerShell port of it using native functions. 
 
 ## Pre-Reqs
-You'll need a few pre-reqs to install on the box you're running this on so it's not 100% self contained, these are as follows:
+You'll need a few prereqs to install on the box you're running this on, so it's not 100% self-contained, these are as follows:
 - Install-Module -Name  ActiveDirectory
 - Install-Module -Name SqlServer
 
@@ -16,35 +16,24 @@ Domain - Domain as seen by STS/ADFS/O365
 ```
 
 ## Usage 
-To execute this you'll need to be running in the context of the ADFS Service account and on the server where ADFS Lives. Once you've got both the encrypted blob and the DKM key from the script you'll need to run the following to convert them:
+To execute this you'll need to be running in the context of the ADFS Service account and on the server where ADFS Lives. 
 
 ```
-function Decode-Base64ToFile {
-    param (
-        [string]$base64String,
-        [string]$outputFile
-    )
-    $bytes = [System.Convert]::FromBase64String($base64String)
-    [System.IO.File]::WriteAllBytes($outputFile, $bytes)
-}
-
-function Convert-HexToBinaryFile {
-    param (
-        [string]$hexString,
-        [string]$outputFile
-    )
-    $hexString = $hexString -replace '-', ''
-    $bytes = for ($i = 0; $i -lt $hexString.Length; $i += 2) {
-        [Convert]::ToByte($hexString.Substring($i, 2), 16)
-    }
-    [System.IO.File]::WriteAllBytes($outputFile, $bytes)
-}
-
-$base64String = Get-Content -Path "TKSKey.txt" -Raw
-Decode-Base64ToFile -base64String $base64String -outputFile "TKSKey.bin"
-
-$hexString = Get-Content -Path "DKM.txt" -Raw
-Convert-HexToBinaryFile -hexString $hexString -outputFile "DKM.bin"
+.\Golden.ps1
+Encrypted Token Signing Key: <Base64blob>
+Certificate value: <certificate value>
+Store location value: <StoreLocation>
+Store name value: <StoreName>
+DKM Key: <DKMKeyValue>
+Domain is: example.zsec.uk
 ```
+
+![image](https://github.com/ZephrFish/ADFSDump-PS/assets/5783068/9594365d-918d-4be5-b44e-ea9ac1e04a35)
+
+
+If you want to do GoldenSAML, you'll need to do our conversion in the final few steps. Once you've got both the encrypted blob and the DKM key from the script, you'll need to run the following to convert them:
+- `cat TKSKey.txt | base64 -d > TKSKey.bin`
+- `cat DKM.txt | tr -d "-" | xxd -r -p > DKM.bin`
+
 
 I'll link these two together later but save the DKM to DKM.txt and the encrytped b64 blob to TKSKey.txt, the PS will do the rest :).
