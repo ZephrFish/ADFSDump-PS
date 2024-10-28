@@ -34,6 +34,7 @@ Domain is: example.zsec.uk
 If you want to do GoldenSAML, you'll need to do our conversion in the final few steps. Once you've got both the encrypted blob and the DKM key from the script, you'll need to run the following to convert them:
 - `cat TKSKey.txt | base64 -d > TKSKey.bin`
 - `cat DKM.txt | tr -d "-" | xxd -r -p > DKM.bin`
+
 I'll link these two together later but save the DKM to DKM.txt and the encrytped b64 blob to TKSKey.txt, the PS will do the rest :).
 
 For doing the same with PowerShell:    
