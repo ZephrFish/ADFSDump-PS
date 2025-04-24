@@ -1,40 +1,35 @@
+# Function to read the DKMKey from LDAP
 function Get-DKMKey {
-    Import-Module ActiveDirectory
-    
-    # Function to get the DKM Key
-    function Get-DKMKey {
-        param (
-            [string]$domain = (Get-ADDomain).DNSRoot,
-            [string]$server = (Get-ADDomainController).Name
-        )
-    
-        
-        $domainComponents = $domain -split '\.'
-        $dcString = ($domainComponents | ForEach-Object { "DC=$_" }) -join ','
-    
-        $searchBase = "CN=ADFS,CN=Microsoft,CN=Program Data,$dcString"
-    
-      
-        try {
-            $key = (Get-ADObject -Filter 'ObjectClass -eq "Contact" -and name -ne "CryptoPolicy"' -SearchBase $searchBase -Properties thumbnailPhoto).thumbnailPhoto
-            if ($key) {
-                $keyString = [System.BitConverter]::ToString($key)
-                Write-Output "DKM Key: $keyString"
-                 Write-Output "Domain is: $domain"
-            } else {
-                Write-Output "DKM Key not found."
-            }
-        } catch {
-            Write-Output "Error: $_"
+    param (
+        [string]$domain = ([adsi]"LDAP://RootDSE").defaultNamingContext,
+        [string]$server = ([adsi]"LDAP://RootDSE").dnsHostName
+    )
+
+    $domainComponents = $domain -split '\.'
+    $dcString = ($domainComponents | ForEach-Object { "$_" }) -join ','
+
+    $searchBase = "LDAP://CN=ADFS,CN=Microsoft,CN=Program Data,$dcString"
+
+    try {
+        $searcher = New-Object DirectoryServices.DirectorySearcher
+        $searcher.SearchRoot = [ADSI]$searchBase
+        $searcher.Filter = '(&(objectClass=contact)(!(name=CryptoPolicy)))'
+        $searcher.PropertiesToLoad.Add("thumbnailPhoto") | Out-Null
+
+        $result = $searcher.FindOne()
+
+        if ($result -and $result.Properties["thumbnailPhoto"]) {
+            $key = $result.Properties["thumbnailPhoto"][0]
+            $keyString = [System.BitConverter]::ToString($key)
+            Write-Output "DKM Key: $keyString"
+            Write-Output "Domain is: $domain"
+        } else {
+            Write-Output "DKM Key not found."
         }
+    } catch {
+        Write-Output "Error: $_"
     }
-    
-    # Example usage
-    Get-DKMKey
-    
-    }
-    
-    
+}
     
     
     if (-not (Get-Module -ListAvailable -Name SqlServer)) {
